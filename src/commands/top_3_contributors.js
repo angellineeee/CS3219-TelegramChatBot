@@ -3,23 +3,23 @@ var bot = require('../bot');
 var commandRegex = /^\/top3contributors$/i;
 bot.onText(commandRegex, function(msg, match) {
 
-var url = "https://api.github.com/repos/ejwa/gitinspector/stats/contributors";
+var url = "https://api.github.com/repos/ejwa/gitinspector/contributors";
 
-function httpGet(url)
-{
-    var xmlHttp = new XMLHttpRequest();
-    xmlHttp.open( "GET", url, false ); // false for synchronous request
-    xmlHttp.send( null );
-    return xmlHttp.responseText;
-}
-	
-function processData() {
-	var contributorsArray = JSON.parse(xmlHttp.responseText.toString());
+var xmlHttp = new XMLHttpRequest();
+xmlHttp.open( "GET", url, false ); // false for synchronous request
+xmlHttp.send( null );
 
-	for(var i = 0; i < contributorsArray.length; i++) {
-		
+var top3 = [];
+
+for(var i = 0; i < xmlHttp.responseText.length; i++) {
+	if(top3.length <= 3) {
+		top3.push([contributorsArray[i].login,contributorsArray[i].contributions]);
 	}
-}	
+	else {
+
+	}
+}
+
 	
 var replyChatId = msg.chat.id;
 if (msg.chat.type !== 'private') {
