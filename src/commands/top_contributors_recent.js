@@ -9,13 +9,15 @@ xmlHttp.send( null );
 
 var result = xmlHttp.responseText;
 //var lastWeek = moment().subtract('days', 7).format('MM-DD-YYYY').unix();
+//not really sure if the time is correct. should get 2 weeks ago sunday date if im not wrong
 var lastWeek = moment().day(-14).unix();
 var contributorsArray = [];
 
 for(var i = 0; i < result.length; i++) {
-	for(var w = 0; w < result[i].weeks.length; w++) {
-		if(contribution:result[i].weeks[w].w == lastWeek) {
-			contributorsArray.push({name:result[i].author.login,contribution:result[i].weeks[w].c};
+	for(var j = 0; j < result[i].weeks.length; j++) {
+		if(contribution:result[i].weeks[j].w == lastWeek) {
+			//not sure if this is the correct way of accessing the login name
+			contributorsArray.push({name:result[i].author.login,contribution:result[i].weeks[j].c};
 		}			
 	}
 }

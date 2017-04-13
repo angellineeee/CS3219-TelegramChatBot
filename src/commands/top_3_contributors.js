@@ -5,12 +5,10 @@ bot.onText(commandRegex, function(msg, match) {
 
 var url = "https://api.github.com/repos/ejwa/gitinspector/contributors";
 
-//function getHTTP (url) {
-	var xmlHttp = new XMLHttpRequest();
-	xmlHttp.open( "GET", url, false ); // false for synchronous request
-	xmlHttp.send( null );
-//	return xmlHttp.responseText;
-//}
+var xmlHttp = new XMLHttpRequest();
+xmlHttp.open( "GET", url, false ); // false for synchronous request
+xmlHttp.send( null );
+
 
 var result = xmlHttp.responseText;
 
@@ -20,6 +18,7 @@ for(var i = 0; i < result.length; i++) {
 	contributorsArray.push({name:result[i].login,contribution:result[i].contributions});
 }
 
+//if the below one dont work, try the above one
 //contributorsArray.sort(function(a,b) {return (a.contribution > b.contribution) ? 1 : ((b.contribution > a.contribution) ? -1 : 0);} );
 contributorsArray.sort(function(a, b){return b.contribution-a.contribution});
 
