@@ -5,21 +5,25 @@ bot.onText(commandRegex, function(msg, match) {
 
 var url = "https://api.github.com/repos/ejwa/gitinspector/contributors";
 
-var xmlHttp = new XMLHttpRequest();
-xmlHttp.open( "GET", url, false ); // false for synchronous request
-xmlHttp.send( null );
+//function getHTTP (url) {
+	var xmlHttp = new XMLHttpRequest();
+	xmlHttp.open( "GET", url, false ); // false for synchronous request
+	xmlHttp.send( null );
+//	return xmlHttp.responseText;
+//}
 
-var top3 = [];
+var result = xmlHttp.responseText;
 
-for(var i = 0; i < xmlHttp.responseText.length; i++) {
-	if(top3.length <= 3) {
-		top3.push([contributorsArray[i].login,contributorsArray[i].contributions]);
-	}
-	else {
+var contributorsArray = [];
 
-	}
+for(var i = 0; i < result.length; i++) {
+	contributorsArray.push({name:result[i].login,contribution:result[i].contributions});
 }
 
+//contributorsArray.sort(function(a,b) {return (a.contribution > b.contribution) ? 1 : ((b.contribution > a.contribution) ? -1 : 0);} );
+contributorsArray.sort(function(a, b){return b.contribution-a.contribution});
+
+var top3 = contributorsArray[0].name + "," + contributorsArray[1].name + "," + contributorsArray[2].name;	
 	
 var replyChatId = msg.chat.id;
 if (msg.chat.type !== 'private') {
@@ -28,5 +32,5 @@ if (msg.chat.type !== 'private') {
 }
 
 var messageOptions = { parse_mode: 'Markdown' };
-bot.sendMessage(replyChatId, "Oh hello *there*!",messageOptions);
+bot.sendMessage(replyChatId, top3 ,messageOptions);
 });
