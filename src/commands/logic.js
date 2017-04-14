@@ -1,4 +1,5 @@
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+var moment = require('moment');
 
 var MESSAGE_TYPE_EMPTY = 0;
 var MESSAGE_TYPE_TOP_THREE_CONTRIBUTORS = 1;
@@ -27,6 +28,7 @@ var getMessageParams = function(message) {
   // topcontributor today https://github.com/tungnk1993/scrapy
   // topcontributor yesterday https://github.com/tungnk1993/scrapy
   // topcontributor lastweek https://github.com/tungnk1993/scrapy
+  // topcontributor lastmonth https://github.com/tungnk1993/scrapy
 
   // Latest Commit information
   // latestcommit name https://github.com/tungnk1993/scrapy
@@ -66,7 +68,7 @@ var getMessageParams = function(message) {
     case "topcontributor":
       messageParams.messageType = 2;
       // Checks that timespan is not empty and contains either today, yesterday or lastweek
-      if (messagePartsArray[1] && (messagePartsArray[1].indexOf("today") !== -1 || messagePartsArray[1].indexOf("yesterday") !== -1 || messagePartsArray[1].indexOf("lastweek") !== -1)) {
+      if (messagePartsArray[1] && (messagePartsArray[1].indexOf("today") !== -1 || messagePartsArray[1].indexOf("yesterday") !== -1 || messagePartsArray[1].indexOf("lastweek") !== -1 || messagePartsArray[1].indexOf("lastmonth") !== -1)) {
         messageParams.timespan = messagePartsArray[1];
       } else {
         messageParams.messageType = 4;
@@ -131,7 +133,7 @@ var getReplyMessage = function(messageParams) {
     case MESSAGE_TYPE_TOP_THREE_CONTRIBUTORS:
       return getTopThreeContributors(messageParams.repositoryUser, messageParams.repositoryName, messageParams.repositoryLink);
     case MESSAGE_TYPE_TOP_CONTRIBUTOR_OF_RECENT_TIME:
-      return getTopContributorOfRecentTime(messageParams.repositoryUser, messageParams.repositoryName, messageParams.timespan);
+      return getTopContributorOfRecentTime(messageParams.repositoryUser, messageParams.repositoryName, messageParams.timespan, messageParams.repositoryLink);
     case MESSAGE_TYPE_LATEST_COMMIT_INFORMATION:
       return getLatestCommitInformation(messageParams.repositoryUser, messageParams.repositoryName, messageParams.commitType);
     case MESSAGE_TYPE_INVALID:
@@ -145,12 +147,12 @@ var getTopThreeContributors = function(repositoryUser, repositoryName, repositor
   var apiUrl = "https://api.github.com/repos/" + repositoryUser + "/" + repositoryName + "/contributors";
   var xhr = new XMLHttpRequest();
   xhr.open( "GET", apiUrl, false ); // false for synchronous request
-  xhr.send( null );
-
+  xhr.send(null);
   var result = JSON.parse(xhr.responseText);
+
   var contributorsArray = [];
 
-  for(var i = 0; i < result.length; i++) {
+  for (var i = 0; i < result.length; i++) {
   	contributorsArray.push({
       "name": result[i].login,
       "contribution": result[i].contributions
@@ -162,15 +164,95 @@ var getTopThreeContributors = function(repositoryUser, repositoryName, repositor
   });
 
   var topThreeContributors = "Top 3 Contributors for " + repositoryLink + " - \n" +
-                             "1. " + contributorsArray[0].name + " (" +  contributorsArray[0].contribution + "), \n" +
-                             "2. " +contributorsArray[1].name + " (" +  contributorsArray[1].contribution + "), \n"  +
-                             "3. " +contributorsArray[2].name + " (" +  contributorsArray[2].contribution + "), \n";
+                             "1. " + contributorsArray[0].name + " (" +  contributorsArray[0].contribution + " commits), \n" +
+                             "2. " +contributorsArray[1].name + " (" +  contributorsArray[1].contribution + " commits), \n"  +
+                             "3. " +contributorsArray[2].name + " (" +  contributorsArray[2].contribution + " commits) \n";
 
   return topThreeContributors;
 };
 
-var getTopContributorOfRecentTime = function(repositoryUser, repositoryName, timespan) {
-  return "Called for top contributor for " + timespan + " for " + repositoryUser + " "+ repositoryName;
+var getTopContributorOfRecentTime = function(repositoryUser, repositoryName, timespan, repositoryLink) {
+  var apiUrl = "https://api.github.com/repos/" + repositoryUser + "/" + repositoryName + "/stats/contributors";
+  var xhr = new XMLHttpRequest();
+  xhr.open( "GET", apiUrl, false ); // false for synchronous request
+  xhr.send(null);
+  var result = JSON.parse(xhr.responseText);
+
+  var now = moment().unix();
+  var today = moment().startOf('day').unix();
+  var yesterday = moment().subtract(1, 'days').startOf('day').unix();
+  var lastWeek = moment().subtract(7, 'days').startOf('day').unix();
+  var lastMonth = moment().subtract(1, 'months').startOf('day').unix();
+
+  var contributorsArray = [];
+
+  for (var i = 0; i < result.length; i++) {
+    for (var j = 0; j < result[i].weeks.length; j++) {
+      // Within Today
+      if (timespan == "today"){
+        if (result[i].weeks[j].w >= today && result[i].weeks[j].w <= now) {
+          contributorsArray.push({
+            "name": result[i].author.login,
+            "contribution": result[i].weeks[j].c
+          });
+        }
+      }
+      // Within Yesterday
+      if (timespan == "yesterday"){
+        if (result[i].weeks[j].w >= yesterday && result[i].weeks[j].w <= now) {
+          contributorsArray.push({
+            "name": result[i].author.login,
+            "contribution": result[i].weeks[j].c
+          });
+        }
+      }
+      // Within Last Week
+      if (timespan == "lastweek"){
+        if (result[i].weeks[j].w >= lastWeek && result[i].weeks[j].w <= now) {
+          contributorsArray.push({
+            "name": result[i].author.login,
+            "contribution": result[i].weeks[j].c
+          });
+        }
+      }
+      // Within Last Month
+      if (timespan == "lastmonth"){
+        if (result[i].weeks[j].w >= lastMonth && result[i].weeks[j].w <= now) {
+          contributorsArray.push({
+            "name": result[i].author.login,
+            "contribution": result[i].weeks[j].c
+          });
+        }
+      }
+  	}
+  }
+
+  contributorsArray.sort(function(a, b) {
+    return b.contribution - a.contribution;
+  });
+
+  if (contributorsArray.length == 0 || contributorsArray[0].contribution == 0) {
+    if (timespan == "lastweek") {
+      var topContributor = "No contributors within " + "last week. Please try again.";
+    } else if (timespan == "lastmonth") {
+      var topContributor = "No contributors within " + "last month. Please try again.";
+    } else {
+      var topContributor = "No contributors within " + timespan + ". Please try again.";
+    }
+  } else {
+    if (timespan == "lastweek") {
+      var topContributor = "Top Contributor for " + repositoryLink + " last week - \n" +
+                           "1. " + contributorsArray[0].name + " (" +  contributorsArray[0].contribution + " commits) \n";
+    } else if (timespan == "lastmonth") {
+      var topContributor = "Top Contributor for " + repositoryLink + " last month - \n" +
+                           "1. " + contributorsArray[0].name + " (" +  contributorsArray[0].contribution + " commits) \n";
+    } else {
+      var topContributor = "Top Contributor for " + repositoryLink + " "  + timespan + " - \n" +
+                           "1. " + contributorsArray[0].name + " (" +  contributorsArray[0].contribution + " commits) \n";
+    }
+  }
+
+  return topContributor;
 }
 
 var getLatestCommitInformation = function(repositoryUser, repositoryName, commitType) {
