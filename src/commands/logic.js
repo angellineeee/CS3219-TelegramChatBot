@@ -25,14 +25,16 @@ var getMessageParams = function(message) {
   // top3contributors https://github.com/tungnk1993/scrapy
 
   // Top Contributor of Recent Time of Repo -
-  // topcontributor today https://github.com/tungnk1993/scrapy
-  // topcontributor yesterday https://github.com/tungnk1993/scrapy
-  // topcontributor lastweek https://github.com/tungnk1993/scrapy
-  // topcontributor lastmonth https://github.com/tungnk1993/scrapy
+  // topcontributor today https://github.com/rebekahlow-jy/nus-nextbus-prototype
+  // topcontributor yesterday https://github.com/rebekahlow-jy/nus-nextbus-prototype
+  // topcontributor lastweek https://github.com/rebekahlow-jy/nus-nextbus-prototype
+  // topcontributor lastmonth https://github.com/rebekahlow-jy/nus-nextbus-prototype
 
   // Latest Commit information
   // latestcommit name https://github.com/tungnk1993/scrapy
   // latestcommit date https://github.com/tungnk1993/scrapy
+  // latestcommit message https://github.com/tungnk1993/scrapy
+  // latestcommit all https://github.com/tungnk1993/scrapy
 
   var messageText = message.text.toLowerCase();
   var messagePartsArray = messageText.split(" ");

@@ -10,6 +10,7 @@ var logic = require('./logic');
 // topcontributor today https://github.com/rebekahlow-jy/nus-nextbus-prototype
 // topcontributor yesterday https://github.com/rebekahlow-jy/nus-nextbus-prototype
 // topcontributor lastweek https://github.com/rebekahlow-jy/nus-nextbus-prototype
+// topcontributor lastmonth https://github.com/rebekahlow-jy/nus-nextbus-prototype
 
 // Latest Commit information
 // latestcommit name https://github.com/tungnk1993/scrapy
