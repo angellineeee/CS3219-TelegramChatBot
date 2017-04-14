@@ -1,3 +1,5 @@
+var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+
 var MESSAGE_TYPE_EMPTY = 0;
 var MESSAGE_TYPE_TOP_THREE_CONTRIBUTORS = 1;
 var MESSAGE_TYPE_TOP_CONTRIBUTOR_OF_RECENT_TIME = 2;
@@ -127,7 +129,7 @@ var getReplyMessage = function(messageParams) {
     case MESSAGE_TYPE_EMPTY:
       return MESSAGE_EMPTY;
     case MESSAGE_TYPE_TOP_THREE_CONTRIBUTORS:
-      return getTopThreeContributors(messageParams.repositoryUser, messageParams.repositoryName);
+      return getTopThreeContributors(messageParams.repositoryUser, messageParams.repositoryName, messageParams.repositoryLink);
     case MESSAGE_TYPE_TOP_CONTRIBUTOR_OF_RECENT_TIME:
       return getTopContributorOfRecentTime(messageParams.repositoryUser, messageParams.repositoryName, messageParams.timespan);
     case MESSAGE_TYPE_LATEST_COMMIT_INFORMATION:
@@ -139,9 +141,32 @@ var getReplyMessage = function(messageParams) {
   }
 };
 
-var getTopThreeContributors = function(repositoryUser, repositoryName) {
+var getTopThreeContributors = function(repositoryUser, repositoryName, repositoryLink) {
+  var apiUrl = "https://api.github.com/repos/" + repositoryUser + "/" + repositoryName + "/contributors";
+  var xhr = new XMLHttpRequest();
+  xhr.open( "GET", apiUrl, false ); // false for synchronous request
+  xhr.send( null );
 
-  return "Called to get top 3 contributors for " + repositoryUser + " "+ repositoryName;
+  var result = JSON.parse(xhr.responseText);
+  var contributorsArray = [];
+
+  for(var i = 0; i < result.length; i++) {
+  	contributorsArray.push({
+      "name": result[i].login,
+      "contribution": result[i].contributions
+    });
+  }
+
+  contributorsArray.sort(function(a, b) {
+    return b.contribution - a.contribution;
+  });
+
+  var topThreeContributors = "Top 3 Contributors for " + repositoryLink + " - \n" +
+                             "1. " + contributorsArray[0].name + " (" +  contributorsArray[0].contribution + "), \n" +
+                             "2. " +contributorsArray[1].name + " (" +  contributorsArray[1].contribution + "), \n"  +
+                             "3. " +contributorsArray[2].name + " (" +  contributorsArray[2].contribution + "), \n";
+
+  return topThreeContributors;
 };
 
 var getTopContributorOfRecentTime = function(repositoryUser, repositoryName, timespan) {
