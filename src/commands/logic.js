@@ -9,7 +9,7 @@ var MESSAGE_INVALID = "Message is invalid, please try again.";
 
 var executeMessage = function(message, bot) {
   var messageParams = getMessageParams(message);
-  var replyMessage = getReplyMessage(messageParams, "www.google.com");
+  var replyMessage = getReplyMessage(messageParams);
   var chatId = message.chat.id;
   bot.sendMessage(chatId, replyMessage)
 };
@@ -36,6 +36,8 @@ var getMessageParams = function(message) {
   var messageParams = {
     "messageType": -1,
     "repositoryLink": "",
+    "repositoryUser": "",
+    "repositoryName": "",
     "timespan": "",
     "commitType": "",
   };
@@ -49,8 +51,8 @@ var getMessageParams = function(message) {
     // Top 3 Contributors of Repo
     case "top3contributors":
       messageParams.messageType = 1;
-      // Checks that link is not empty and contains github.com/
-      if (messagePartsArray[1] && messagePartsArray[1].indexOf("github.com/") !== -1) {
+      // Checks that link is not empty and contains https://github.com/
+      if (messagePartsArray[1] && messagePartsArray[1].indexOf("https://github.com/") !== -1) {
         messageParams.repositoryLink = messagePartsArray[1];
       } else {
         messageParams.messageType = 4;
@@ -68,8 +70,8 @@ var getMessageParams = function(message) {
         messageParams.messageType = 4;
         return messageParams;
       }
-      // Checks that link is not empty and contains github.com/
-      if (messagePartsArray[2] && messagePartsArray[2].indexOf("github.com/") !== -1) {
+      // Checks that link is not empty and contains https://github.com/
+      if (messagePartsArray[2] && messagePartsArray[2].indexOf("https://github.com/") !== -1) {
         messageParams.repositoryLink = messagePartsArray[2];
       } else {
         messageParams.messageType = 4;
@@ -87,8 +89,8 @@ var getMessageParams = function(message) {
         messageParams.messageType = 4;
         return messageParams;
       }
-      // Checks that link is not empty and contains github.com/
-      if (messagePartsArray[2] && messagePartsArray[2].indexOf("github.com/") !== -1) {
+      // Checks that link is not empty and contains https://github.com/
+      if (messagePartsArray[2] && messagePartsArray[2].indexOf("https://github.com/") !== -1) {
         messageParams.repositoryLink = messagePartsArray[2];
       } else {
         messageParams.messageType = 4;
@@ -102,6 +104,21 @@ var getMessageParams = function(message) {
       return messageParams;
   }
 
+  var repositoryArray = (messageParams.repositoryLink).split("https://github.com/");
+  if (repositoryArray[1]) {
+    var repositoryPartsArray = repositoryArray[1].split("/");
+    if (repositoryPartsArray[0] && repositoryPartsArray[1]) {
+      messageParams.repositoryUser = repositoryPartsArray[0];
+      messageParams.repositoryName = repositoryPartsArray[1];
+    } else {
+      messageParams.messageType = 4;
+      return messageParams;
+    }
+  } else {
+    messageParams.messageType = 4;
+    return messageParams;
+  }
+
   return messageParams;
 }
 
@@ -110,11 +127,11 @@ var getReplyMessage = function(messageParams) {
     case MESSAGE_TYPE_EMPTY:
       return MESSAGE_EMPTY;
     case MESSAGE_TYPE_TOP_THREE_CONTRIBUTORS:
-      return getTopThreeContributors(messageParams.repositoryLink);
+      return getTopThreeContributors(messageParams.repositoryUser, messageParams.repositoryName);
     case MESSAGE_TYPE_TOP_CONTRIBUTOR_OF_RECENT_TIME:
-      return getTopContributorOfRecentTime(messageParams.repositoryLink, messageParams.timespan);
+      return getTopContributorOfRecentTime(messageParams.repositoryUser, messageParams.repositoryName, messageParams.timespan);
     case MESSAGE_TYPE_LATEST_COMMIT_INFORMATION:
-      return getLatestCommitInformation(messageParams.repositoryLink, messageParams.commitType);
+      return getLatestCommitInformation(messageParams.repositoryUser, messageParams.repositoryName, messageParams.commitType);
     case MESSAGE_TYPE_INVALID:
       return MESSAGE_INVALID;
     default:
@@ -122,16 +139,17 @@ var getReplyMessage = function(messageParams) {
   }
 };
 
-var getTopThreeContributors = function(repositoryLink) {
-  return "Called to get top 3 contributors for " + repositoryLink;
+var getTopThreeContributors = function(repositoryUser, repositoryName) {
+
+  return "Called to get top 3 contributors for " + repositoryUser + " "+ repositoryName;
 };
 
-var getTopContributorOfRecentTime = function(repositoryLink, timespan) {
-  return "Called for top contributor for " + timespan + " for " + repositoryLink;
+var getTopContributorOfRecentTime = function(repositoryUser, repositoryName, timespan) {
+  return "Called for top contributor for " + timespan + " for " + repositoryUser + " "+ repositoryName;
 }
 
-var getLatestCommitInformation = function(repositoryLink, commitType) {
-  return "Called to get latest commit information for " + commitType + " for " + repositoryLink ;
+var getLatestCommitInformation = function(repositoryUser, repositoryName, commitType) {
+  return "Called to get latest commit information for " + commitType + " for " + repositoryUser + " "+ repositoryName;
 }
 
 module.exports.executeMessage = executeMessage;
