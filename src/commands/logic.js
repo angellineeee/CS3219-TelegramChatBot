@@ -34,7 +34,7 @@ var getMessageParams = function(message) {
   // latestcommit name https://github.com/tungnk1993/scrapy
   // latestcommit date https://github.com/tungnk1993/scrapy
 
-  var messageText = message.text;
+  var messageText = message.text.toLowerCase();
   var messagePartsArray = messageText.split(" ");
 
   var messageParams = {
@@ -87,7 +87,7 @@ var getMessageParams = function(message) {
     case "latestcommit":
       messageParams.messageType = 3;
       // Checks that commitType is not empty and contains either name or date
-      if (messagePartsArray[1] && (messagePartsArray[1].indexOf("name") !== -1 || messagePartsArray[1].indexOf("date") !== -1)) {
+      if (messagePartsArray[1] && (messagePartsArray[1].indexOf("name") !== -1 || messagePartsArray[1].indexOf("date") !== -1 || messagePartsArray[1].indexOf("message") !== -1 || messagePartsArray[1].indexOf("all") !== -1)) {
         messageParams.commitType = messagePartsArray[1];
       } else {
         messageParams.messageType = 4;
@@ -135,7 +135,7 @@ var getReplyMessage = function(messageParams) {
     case MESSAGE_TYPE_TOP_CONTRIBUTOR_OF_RECENT_TIME:
       return getTopContributorOfRecentTime(messageParams.repositoryUser, messageParams.repositoryName, messageParams.timespan, messageParams.repositoryLink);
     case MESSAGE_TYPE_LATEST_COMMIT_INFORMATION:
-      return getLatestCommitInformation(messageParams.repositoryUser, messageParams.repositoryName, messageParams.commitType);
+      return getLatestCommitInformation(messageParams.repositoryUser, messageParams.repositoryName, messageParams.commitType, messageParams.repositoryLink);
     case MESSAGE_TYPE_INVALID:
       return MESSAGE_INVALID;
     default:
@@ -255,8 +255,58 @@ var getTopContributorOfRecentTime = function(repositoryUser, repositoryName, tim
   return topContributor;
 }
 
-var getLatestCommitInformation = function(repositoryUser, repositoryName, commitType) {
-  return "Called to get latest commit information for " + commitType + " for " + repositoryUser + " "+ repositoryName;
+var getLatestCommitInformation = function(repositoryUser, repositoryName, commitType, repositoryLink) {
+  var apiUrl = "https://api.github.com/repos/" + repositoryUser + "/" + repositoryName + "/commits";
+  var xhr = new XMLHttpRequest();
+  xhr.open( "GET", apiUrl, false ); // false for synchronous request
+  xhr.send(null);
+  var result = JSON.parse(xhr.responseText);
+
+  var latestCommitObject = {
+    "name": '',
+    "date": -1,
+    "message": '',
+  };
+
+  for (var i = 0; i < result.length; i++) {
+    if (latestCommitObject.date == '') {
+      latestCommitObject.name = result[i].commit.author.name;
+      latestCommitObject.date = Number(moment(result[i].commit.author.date).unix());
+      latestCommitObject.message = result[i].commit.message;
+    } else {
+      if (Number(moment(result[i].commit.author.date).unix()) >= latestCommitObject.date) {
+        latestCommitObject.name = result[i].commit.author.name;
+        latestCommitObject.date = Number(moment(result[i].commit.author.date).unix());
+        latestCommitObject.message = result[i].commit.message;
+      }
+    }
+  }
+
+  if (latestCommitObject.name == '' && latestCommitArray.date == '' && latestCommitObject.message == '') {
+    var latestCommit = "No commits found in repository. Please try again.";
+  } else {
+    if (commitType == "name") {
+      var latestCommit = "Latest Commit by Name - \n" +
+                         "Name: " + latestCommitObject.name;
+    } else if (commitType == "date") {
+      var momentDate = moment.unix(latestCommitObject.date);
+      var formattedDate = momentDate.format('DD MMM YYYY, h:mm:ss a');
+      var latestCommit = "Latest Commit by Date - \n" +
+                         "Date: " + formattedDate;
+    } else if (commitType == "message") {
+      var latestCommit = "Latest Commit by Message - \n" +
+                         "Message: " + latestCommitObject.message;
+    } else {
+      var momentDate = moment.unix(latestCommitObject.date);
+      var formattedDate = momentDate.format('DD MMM YYYY, h:mm:ss a');
+      var latestCommit = "Latest Commit - \n" +
+                         "Name: " + latestCommitObject.name + " \n" +
+                         "Date: " + formattedDate + " \n" +
+                         "Message: " + latestCommitObject.message + " \n";
+    }
+  }
+
+  return latestCommit;
 }
 
 module.exports.executeMessage = executeMessage;
